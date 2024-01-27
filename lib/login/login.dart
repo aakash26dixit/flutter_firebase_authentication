@@ -92,17 +92,20 @@ class _LoginState extends State<Login> {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
 
-                            FirebaseAuthentication.signInWithEmailPassword(
+                            var user = await FirebaseAuthentication.signInWithEmailPassword(
                                 _usernameController.text,
                                 _passwordController.text,
                                 context
                             );
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => LandingPage()),
-                            );
+                            if(user != null){
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => LandingPage()),
+                              );
+                            }
+
                           }
                         },
                         child: const Text('LOGIN'),

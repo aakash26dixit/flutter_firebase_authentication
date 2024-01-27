@@ -5,96 +5,144 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class FirebaseAuthentication {
-
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  static Future<User?> signUpWithEmailPassword(String name, String email, String password, String contact, context) async {
-    try{
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+  static Future<User?> signUpWithEmailPassword(String name, String email,
+      String password, String contact, context) async {
+    try {
+      UserCredential credential = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
 
       await FirebaseAuth.instance.currentUser!.updateDisplayName(name);
       await FirebaseAuth.instance.currentUser!.updateEmail(email);
-      await CommonFunctions.createUser(name, email, password, contact);
+      await CommonFunctions.createUser(name, email, password, contact, "users");
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Signed in successfully.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Signed in successfully.'),
+        backgroundColor: Colors.green,
+      ));
 
-    }on FirebaseAuthException catch(e,s){
+      return credential.user;
+    } on FirebaseAuthException catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
       print(e);
-    } catch (e,s) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
     }
   }
-
 
   static signUpAsAdmin(String email, String password, context) async {
     try {
       final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       // Assign the "admin" role to the user in Firestore
-      await _firestore.collection('admin').doc(userCredential.user?.uid).set({
-        'role': 'admin',
-      });
+      // await _firestore.collection('admin').doc(userCredential.user?.uid).set({
+      //   'role': 'admin',
+      // });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Signed up as admin")));
+      await CommonFunctions.createUser("", email, password, "", "admin");
 
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Signed up as admin"),
+        backgroundColor: Colors.green,
+      ));
 
-      print('Admin signed up successfully');
-    } catch (e) {
-      print('Error signing up: $e');
-    }
-  }
-
-  static Future<User?> signInWithEmailPassword(String email, String password, context) async {
-    try{
-      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Signed in successfully')));
-
-    }catch(e,s){
+      return userCredential.user;
+    } on FirebaseAuthException catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
       print(e);
+    } catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
     }
   }
 
-  Future<void> signInAsAdmin(String email, String password) async {
+  static Future<User?> signInWithEmailPassword(
+      String email, String password, context) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
-      // Get user's role from Firestore
-      String? userRole = await getUserRole(userCredential.user?.uid);
 
-      // Check if the user has the "admin" role
-      if (userRole == 'admin') {
-        print('Admin signed in successfully');
-        // Proceed with any additional logic for admin sign-in
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Signed in successfully'),
+        backgroundColor: Colors.green,
+      ));
+
+      return userCredential.user;
+
+    } on FirebaseAuthException catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
+      print(e);
+    } catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
+
+  static Future<bool> checkIfAdminExists(
+      String email, String password, context) async {
+    try {
+      await Firebase.initializeApp();
+
+      CollectionReference users =
+          FirebaseFirestore.instance.collection('admin');
+
+      QuerySnapshot querySnapshot = await users
+          .where('email', isEqualTo: email)
+          .where('password', isEqualTo: password)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        await FirebaseAuthentication.signInWithEmailPassword(
+            email, password, context);
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Signed in successfully"),
+          backgroundColor: Colors.green,
+        ));
+
+        return true;
       } else {
-        // If the user doesn't have the "admin" role, sign them out
-        print('User does not have admin role. Signing out.');
-        await _auth.signOut();
+        // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red,));
+        return false;
       }
-    } catch (e) {
-      print('Error signing in: $e');
+
+      return false;
+    } on FirebaseAuthException catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
+      // print(e);
+      return false;
+    } catch (e, s) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: Colors.red,
+      ));
+      return false;
     }
   }
-
-  Future<String?> getUserRole(String? uid) async {
-    try {
-      final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-      if (uid != null) {
-        // Retrieve user's role from Firestore
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(uid).get();
-        return userDoc['role'];
-      }
-    } catch (e) {
-      print('Error getting user role: $e');
-    }
-    return null;
-  }
-
 }

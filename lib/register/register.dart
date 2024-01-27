@@ -23,20 +23,6 @@ class _RegisterState extends State<Register> {
   final CommonFunctions commonFunctions = CommonFunctions();
   final FirebaseAuthentication _auth = FirebaseAuthentication();
 
-  // Future signUp(
-  //     String name, String password, String contact, String email) async {
-  //   User? user = await _auth.signUpWithEmailPassword(email, password);
-  //
-  //   if (user != null) {
-  //     Navigator.pushNamed(context, "/login").then((value) =>
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //             new SnackBar(content: new Text("Signup successful"))));
-  //   } else {
-  //     ScaffoldMessenger.of(context)
-  //         .showSnackBar(SnackBar(content: new Text("Signup error occured")));
-  //   }
-  // }
-
   Future createUser(username, email, password, contact) async {
     final docUser = FirebaseFirestore.instance.collection('users').doc();
 
@@ -116,7 +102,7 @@ class _RegisterState extends State<Register> {
                   decoration: const InputDecoration(
                       hintText: "Contact", border: OutlineInputBorder()),
                   validator: (value) {
-                    if (value == null || value.isEmpty || value.length < 10) {
+                    if (value == null || value.isEmpty || value.length > 10) {
                       return 'Please enter a valid contact number';
                     }
                     return null;
@@ -145,19 +131,8 @@ class _RegisterState extends State<Register> {
                           try {
                             if (_formKey.currentState!.validate()) {
                               _formKey.currentState!.save();
-                              // await createUser(
-                              //     _usernameController.text,
-                              //     _passwordController.text,
-                              //     _phoneController.text,
-                              //     _emailController.text);
 
-                              // await signUp(
-                              //     _usernameController.text,
-                              //     _passwordController.text,
-                              //     _phoneController.text,
-                              //     _emailController.text);
-
-                              FirebaseAuthentication.signUpWithEmailPassword(
+                              var user = await FirebaseAuthentication.signUpWithEmailPassword(
                                   _usernameController.text,
                                   _emailController.text,
                                   _passwordController.text,
@@ -165,11 +140,13 @@ class _RegisterState extends State<Register> {
                                   context
                               );
 
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const Login()),
-                              );
+                              if(user != null){
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const Login()),
+                                );
+                              }
                             }
                           } catch (e, s) {
                             print(e);

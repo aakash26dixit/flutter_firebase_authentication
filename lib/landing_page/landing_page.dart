@@ -1,4 +1,5 @@
 import 'package:acc_voting_app/CommonFunctions/Commonfunctions.dart';
+import 'package:acc_voting_app/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,14 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
+
+  final docUserAdmin = FirebaseFirestore.instance
+      .collection('voteCount')
+      .doc("JzKlcz1ukiT1Mpbsyvq3");
+  final docUserUser = FirebaseFirestore.instance
+      .collection('users')
+      .doc();
+
   var candidatesList = [
     "Candidate 1",
     "Candidate 2",
@@ -39,12 +48,12 @@ class _LandingPageState extends State<LandingPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
-          Text("Who do you want to vote",
+          const Text("Who do you want to vote",
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w700)),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           FutureBuilder<bool>(
@@ -52,7 +61,7 @@ class _LandingPageState extends State<LandingPage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 // If the Future is still running, show a loading indicator
-                return CircularProgressIndicator(
+                return const CircularProgressIndicator(
                   color: Colors.orange,
                 );
               } else if (snapshot.hasError) {
@@ -62,7 +71,7 @@ class _LandingPageState extends State<LandingPage> {
                 // If the Future is complete, display the result
                 bool hasVoted = snapshot.data!;
                 return hasVoted
-                    ? Text("Thanks for voting")
+                    ? const Text("Thanks for voting")
                     : ListView.builder(
                         shrinkWrap: true,
                         itemCount: candidatesList.length,
@@ -80,29 +89,7 @@ class _LandingPageState extends State<LandingPage> {
                                       selectedValue = value as int;
                                       print("Button value: $value");
                                     });
-                                    final docUser = FirebaseFirestore.instance
-                                        .collection('voteCount')
-                                        .doc();
 
-                                    value == 1
-                                        ? docUser.update({
-                                            'candidate_1':
-                                                FieldValue.increment(1)
-                                          })
-                                        : value == 2
-                                            ? docUser.update({
-                                                'candidate_2':
-                                                    FieldValue.increment(1)
-                                              })
-                                            : value == 3
-                                                ? docUser.update({
-                                                    'candidate_3':
-                                                        FieldValue.increment(1)
-                                                  })
-                                                : docUser.update({
-                                                    'candidate_4':
-                                                        FieldValue.increment(1)
-                                                  });
                                   },
                                 ),
                               ),
@@ -112,13 +99,36 @@ class _LandingPageState extends State<LandingPage> {
               }
             },
           ),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              ElevatedButton(onPressed: () {}, child: Text("Vote")),
+              ElevatedButton(onPressed: () async {
+                selectedValue == 1
+                    ? await docUserAdmin.update({
+                  'candidate_1':
+                  FieldValue.increment(1)
+                })
+                    : selectedValue == 2
+                    ? await docUserAdmin.update({
+                  'candidate_2':
+                  FieldValue.increment(1)
+                })
+                    : selectedValue == 3
+                    ? await docUserAdmin.update({
+                  'candidate_3':
+                  FieldValue.increment(1)
+                })
+                    : await docUserAdmin.update({
+                  'candidate_4':
+                  FieldValue.increment(1)
+                });
+
+                await CommonFunctions.updateVotedStatus(user!.email, context);
+
+              }, child: Text("Vote")),
             ],
           )
         ],

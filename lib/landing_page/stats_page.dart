@@ -20,7 +20,17 @@ class _StatsPageState extends State<StatsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Firestore Example'),
+        title: Text('Total Vote count'),
+        actions: [
+          InkWell(
+            onTap: () async {
+              try{
+                await FirebaseAuth.instance.signOut();
+              }catch(e,s){print(e);}
+            },
+            child: const Icon(Icons.more_vert),
+          )
+        ],
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection('voteCount').snapshots(),
@@ -37,10 +47,10 @@ class _StatsPageState extends State<StatsPage> {
           List<String> documentValues = [];
           snapshot.data?.docs.forEach((DocumentSnapshot document) {
             // Adjust the field name based on your Firestore document structure
-            String value1 = document['candidate_1'];
-            String value2 = document['candidate_2'];
-            String value3 = document['candidate_3'];
-            String value4 = document['candidate_4'];
+            String value1 = document['candidate_1'].toString();
+            String value2 = document['candidate_2'].toString();
+            String value3 = document['candidate_3'].toString();
+            String value4 = document['candidate_4'].toString();
             documentValues.add(value1);
             documentValues.add(value2);
             documentValues.add(value3);

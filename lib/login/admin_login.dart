@@ -21,19 +21,6 @@ class _AdminLoginState extends State<AdminLogin> {
   final _passwordController = TextEditingController();
   final FirebaseAuthentication _auth = FirebaseAuthentication();
 
-  // Future signIn(String email, String password) async {
-  //   User? user = await _auth.signUpWithEmailPassword(email, password);
-  //
-  //   if (user != null) {
-  //     Navigator.pushNamed(context, "/login").then((value) =>
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //             new SnackBar(content: new Text("Login successful"))));
-  //   } else {
-  //     ScaffoldMessenger.of(context)
-  //         .showSnackBar(SnackBar(content: new Text("Login error occured")));
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,17 +81,19 @@ class _AdminLoginState extends State<AdminLogin> {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
 
-                            await FirebaseAuthentication.signUpAsAdmin(
+                            var user = await FirebaseAuthentication.checkIfAdminExists(
                                 _usernameController.text,
                                 _passwordController.text,
                                 context
                             );
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => StatsPage()),
-                            );
+                            if(user == true){
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => StatsPage()),
+                              );
+                            }
                           }
                         },
                         child: const Text('LOGIN'),
